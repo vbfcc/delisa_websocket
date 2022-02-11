@@ -34,14 +34,24 @@ const io = require("socket.io")(serverPort, {
   });
 
   io.on("connection", (socket) => {
-      socket.join(user.room);
+      const userRoom = user.room;
+      socket.join(userRoom);
+
+      //send user is connected for partner
+      io.to(userRoom).emit('room',{
+        partner_is_connected: true,
+        });
       console.log(
           {
               username:user.username,
               connected:true
           }
         );
-    socket.emit('welcome','Hello '+user.username);
+
+    //check if partner is connected send partner is connected for self
+    socket.emit('room',{
+        partner_is_connected:(getRoomUsers(userRoom).length == 2) ? true : false
+    });
     //Listen for chat message
     socket.on('chatMessage',(msg)=>{
         const user = getCurrentUser(socket.id);
@@ -49,12 +59,18 @@ const io = require("socket.io")(serverPort, {
             id : msg.id,
             music_name : msg.music_name,
             url : msg.url,
-            time : msg.time
+            time : msg.time,
+            status: msg.status,
+            index: msg.index,
+            extra: msg.extra
         });
         console.log(msg);
     });
 
     socket.on('disconnect',(socket)=>{
+        io.to(userRoom).emit('room',{
+            partner_is_connected: false
+        });
         console.log({
             username:user.username,
             connected:false
