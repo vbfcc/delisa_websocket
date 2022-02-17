@@ -38,7 +38,7 @@ const io = require("socket.io")(serverPort, {
       socket.join(userRoom);
 
       //send user is connected for partner
-      io.to(userRoom).emit('room',{
+      socket.broadcast.to(userRoom).emit('room',{
         partner_is_connected: true,
         });
       console.log(
@@ -50,7 +50,7 @@ const io = require("socket.io")(serverPort, {
 
     //check if partner is connected send partner is connected for self
     socket.emit('room',{
-        partner_is_connected:(getRoomUsers(userRoom).length == 2) ? true : false
+        partner_is_connected:(getRoomUsers(userRoom).length == 2)
     });
     //Listen for chat message
     socket.on('chatMessage',(msg)=>{
@@ -67,7 +67,8 @@ const io = require("socket.io")(serverPort, {
         console.log(msg);
     });
 
-    socket.on('disconnect',(socket)=>{
+    socket.on('disconnect',()=>{
+        userLeave(socket.id)
         io.to(userRoom).emit('room',{
             partner_is_connected: false
         });
@@ -75,7 +76,6 @@ const io = require("socket.io")(serverPort, {
             username:user.username,
             connected:false
         });
-        userLeave(socket.id);
     })
   });
 
