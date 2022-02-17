@@ -7,7 +7,8 @@ function userJoin(id, token){
         username:null,
         token:token,
         room:null,
-        permission:false
+        permission:false,
+        pusher_channel : null
     }
     users.push(user);
     return user;

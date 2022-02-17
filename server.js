@@ -35,7 +35,9 @@ const io = require("socket.io")(serverPort, {
 
   io.on("connection", (socket) => {
       const userRoom = user.room;
+      const pusher_channel = user.pusher_channel;
       socket.join(userRoom);
+      socket.join(pusher_channel);
 
       //send user is connected for partner
       socket.broadcast.to(userRoom).emit('room',{
@@ -67,6 +69,20 @@ const io = require("socket.io")(serverPort, {
         console.log(msg);
     });
 
+
+
+    //Global message
+    socket.on('send_notification',(msg)=>{
+        const user = getCurrentUser(socket.id);
+        io.to(msg.pusher_channel).emit('notification_listener',{
+            title : msg.title,
+            detail : msg.detail,
+            result : msg.result,
+            extra : msg.extra,
+            date : msg.date
+        });
+    });
+
     socket.on('disconnect',()=>{
         userLeave(socket.id)
         io.to(userRoom).emit('room',{
@@ -92,6 +108,7 @@ async function checkToken(user)
         }
         await axios.post(baseDomain+'/api/v1/auth/me',{},config)
         .then(function (response) {
+            user.pusher_channel = response.data.data['pusher-channel']
             user.username = response.data.data.name;
             user.room = response.data.data.relation.id;
             user.permission = true;
