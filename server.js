@@ -1,9 +1,9 @@
 const axios = require('axios');
 const { userJoin, getCurrentUser, userLeave, getRoomUsers} = require('./utils/users')
 const baseDomain = 'https://panel.delisa.pro'
-const serverPort = 3000;
+const serverPort = '300' + process.env.NODE_APP_INSTANCE || 0;
 
-const io = require("socket.io")(serverPort, {
+const io = require("socket.io")(parseInt(serverPort), {
     serveClient: false,
     // below are engine.IO options
     pingInterval: 10000,
@@ -15,7 +15,11 @@ const io = require("socket.io")(serverPort, {
 
   io.use( async (socket, next) => {
     let handshake = socket.handshake;
-    token = (handshake.auth.token)
+  //  token = ()
+  //this below line is for when need to send token without 'bearer'
+  // token = 'bearer ' + (handshake.auth.token || handshake.query.token);
+   token = handshake.auth.token || handshake.query.token;
+   console.log(token);
     user = getCurrentUser(socket.id);
     if(!user)
     {
@@ -33,11 +37,20 @@ const io = require("socket.io")(serverPort, {
     }
   });
 
-  io.on("connection", (socket) => {
+  io.on("connection", async(socket) => {
       const userRoom = user.room;
       const pusher_channel = user.pusher_channel;
       socket.join(userRoom);
       socket.join(pusher_channel);
+
+      //this below code part is for call this api
+    //   await axios.post('https://panel.delisa.pro/api/v1/isconnected',{
+    //     'status': 1
+    //    },{
+    //     headers: {
+    //         'Authorization':token
+    //     }
+    //    });
 
       //send user is connected for partner
       socket.broadcast.to(userRoom).emit('room',{
@@ -69,6 +82,72 @@ const io = require("socket.io")(serverPort, {
         console.log(msg);
     });
 
+    //new chat part for new update on delisa
+ // Listen for chat reactions
+// socket.on('chatReaction', (msg) => {
+//     const user = getCurrentUser(socket.id);
+//     socket.broadcast.to(user.room).emit('reaction', {
+//         // id : msg.id,
+//         // messageId: msg.messageId,
+//         // reactionType: msg.reactionType,
+//         id: msg.id, // Unique identifier for the reaction
+//         sender_id: msg.user.id, // ID of the user sending the reaction
+//         receiver_id: msg.receiver_id, // ID of the user who received the reaction
+//         emoji: msg.emoji, // The emoji used for the reaction
+//         text: msg.text, // Optional text associated with the reaction
+//         seen: false, // Initially set to false
+//         created_at: new Date().toISOString(), // Timestamp for when the reaction was created
+//     });
+//     console.log(msg);
+// });
+
+// Assuming this is your 'chatReaction' event handler
+
+socket.on('chatReaction', (msg) => {
+    try {
+        const user = getCurrentUser(socket.id);
+
+        if (!user || !user.id) {
+            // Handle the case where user or user.id is undefined or falsy
+            console.error('User or user.id is undefined.');
+            return; // Prevent further processing if user is undefined
+        }
+
+        // Access the user's id safely
+        const userId = user.id;
+
+        // Continue processing with the user's id
+        socket.broadcast.to(user.room).emit('reaction', {
+            id: msg.id,
+            sender_id: userId, // Use the safely retrieved userId
+            receiver_id: msg.receiver_id,
+            emoji: msg.emoji,
+            text: msg.text,
+            seen: false,
+            created_at: new Date().toISOString(),
+        });
+        console.log(msg);
+    } catch (error) {
+        // Handle any other unexpected errors
+        console.error('Error in chatReaction event:', error);
+    }
+});
+
+
+// Listen for marking messages as seen
+socket.on('markSeen', (msg) => {
+    const user = getCurrentUser(socket.id);
+    // Update message status to "seen" for the user
+    // You need to implement the logic to update the status in your data structure
+
+    // Broadcast the updated status to all participants in the room
+    socket.broadcast.to(user.room).emit('messageSeen', {
+        id : msg.id,
+        messageId: msg,
+        //userId: user.id
+    });
+    console.log(`Message ${msg} marked as seen by user ${user.id}`);
+});
 
 
     //Global message
@@ -83,7 +162,18 @@ const io = require("socket.io")(serverPort, {
         });
     });
 
-    socket.on('disconnect',()=>{
+    socket.on('disconnect',async()=>{
+
+              //this below code part is for call this api
+        // await axios.post('https://panel.delisa.pro/api/v1/isconnected',{
+        //     'status': 0
+        //    },{
+        //     headers: {
+        //         'Authorization':token
+        //     }
+        //    });
+    
+
         userLeave(socket.id)
         io.to(userRoom).emit('room',{
             partner_is_connected: false
