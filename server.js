@@ -44,6 +44,28 @@ const io = require("socket.io")(parseInt(serverPort), {
       socket.join(pusher_channel);
 
       //this below code part is for call this api
+       // Function to check user connection status and call the API
+    const checkUserConnectionStatus = async () => {
+        try {
+            // Check user's connection status
+            const response = await axios.post('https://panel.delisa.pro/api/v1/isconnected', {
+                status: socket.connected ? 1 : 0 // Check if the user is connected to the socket
+            }, {
+                headers: {
+                    'Authorization': user.token
+                }
+            });
+
+            console.log(`User connection status checked: ${socket.connected ? 'Connected' : 'Disconnected'}`);
+        } catch (error) {
+            console.error('Error checking user connection status:', error);
+        }
+    };
+        // Start checking user connection status immediately when they connect
+        checkUserConnectionStatus();
+     // Start checking user connection status every 2 minutes
+     const intervalId = setInterval(checkUserConnectionStatus, 2 * 60 * 1000); // 2 minutes in milliseconds
+
     //   await axios.post('https://panel.delisa.pro/api/v1/isconnected',{
     //     'status': 1
     //    },{
@@ -165,6 +187,23 @@ socket.on('markSeen', (msg) => {
     socket.on('disconnect',async()=>{
 
               //this below code part is for call this api
+              try {
+                // Call the API with a status of 0 before clearing the interval
+                await axios.post('https://panel.delisa.pro/api/v1/isconnected', {
+                    status: 0
+                }, {
+                    headers: {
+                        'Authorization': token
+                    }
+                });
+                console.log('User disconnected and API called with status 0');
+            } catch (error) {
+                console.error('Error calling API with status 0:', error);
+            }
+        
+            // Clear the interval
+            clearInterval(intervalId);
+        
         // await axios.post('https://panel.delisa.pro/api/v1/isconnected',{
         //     'status': 0
         //    },{
