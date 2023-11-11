@@ -1,6 +1,6 @@
 const axios = require('axios');
 const { userJoin, getCurrentUser, userLeave, getRoomUsers} = require('./utils/users')
-const baseDomain = 'https://panel.delisa.pro'
+const baseDomain = 'https://panel.delisa.app'
 const serverPort = '300' + process.env.NODE_APP_INSTANCE || 0;
 
 const io = require("socket.io")(parseInt(serverPort), {
@@ -48,7 +48,7 @@ const io = require("socket.io")(parseInt(serverPort), {
     const checkUserConnectionStatus = async () => {
         try {
             // Check user's connection status
-            const response = await axios.post('https://panel.delisa.pro/api/v1/isconnected', {
+            const response = await axios.post('https://panel.delisa.app/api/v1/isconnected', {
                 status: socket.connected ? 1 : 0 // Check if the user is connected to the socket
             }, {
                 headers: {
@@ -189,7 +189,7 @@ socket.on('markSeen', (msg) => {
               //this below code part is for call this api
               try {
                 // Call the API with a status of 0 before clearing the interval
-                await axios.post('https://panel.delisa.pro/api/v1/isconnected', {
+                await axios.post('https://panel.delisa.app/api/v1/isconnected', {
                     status: 0
                 }, {
                     headers: {
