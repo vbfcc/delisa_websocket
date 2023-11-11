@@ -1,7 +1,13 @@
+const express = require('express');
+const app = express();
 const axios = require('axios');
 const { userJoin, getCurrentUser, userLeave, getRoomUsers} = require('./utils/users')
 const baseDomain = 'https://panel.delisa.app'
 const serverPort = '300' + process.env.NODE_APP_INSTANCE || 0;
+
+//this below line code is related to connectionTracker.js file
+const connectionTracker = require('./connectionTracker');
+
 
 const io = require("socket.io")(parseInt(serverPort), {
     serveClient: false,
@@ -38,6 +44,10 @@ const io = require("socket.io")(parseInt(serverPort), {
   });
 
   io.on("connection", async(socket) => {
+
+//this below line code is related to connectionTracker.js file
+    connectionTracker.trackUserConnection(socket);
+
       const userRoom = user.room;
       const pusher_channel = user.pusher_channel;
       socket.join(userRoom);
@@ -224,6 +234,12 @@ socket.on('markSeen', (msg) => {
     })
   });
 
+  
+//this below line code is related to connectionTracker.js file
+app.get('/connected-users', (req, res) => {
+    const connectedUsersCount = connectionTracker.getConnectedUsersCount();
+    res.json({ connectedUsersCount });
+  });
 
 async function checkToken(user)
   {
