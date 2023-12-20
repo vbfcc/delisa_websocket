@@ -55,34 +55,27 @@ const io = require("socket.io")(parseInt(serverPort), {
 
       //this below code part is for call this api
        // Function to check user connection status and call the API
-    const checkUserConnectionStatus = async () => {
-        try {
-            // Check user's connection status
-            const response = await axios.post('https://panel.delisa.app/api/v1/isconnected', {
-                status: socket.connected ? 1 : 0 // Check if the user is connected to the socket
-            }, {
-                headers: {
-                    'Authorization': user.token
-                }
-            });
+    // const checkUserConnectionStatus = async () => {
+    //     try {
+    //         // Check user's connection status
+    //         const response = await axios.post('https://panel.delisa.app/api/v1/isconnected', {
+    //             status: socket.connected ? 1 : 0 // Check if the user is connected to the socket
+    //         }, {
+    //             headers: {
+    //                 'Authorization': user.token
+    //             }
+    //         });
 
-            console.log(`User connection status checked: ${socket.connected ? 'Connected' : 'Disconnected'}`);
-        } catch (error) {
-            console.error('Error checking user connection status:', error);
-        }
-    };
-        // Start checking user connection status immediately when they connect
-        checkUserConnectionStatus();
-     // Start checking user connection status every 2 minutes
-     const intervalId = setInterval(checkUserConnectionStatus, 2 * 60 * 1000); // 2 minutes in milliseconds
-
-    //   await axios.post('https://panel.delisa.pro/api/v1/isconnected',{
-    //     'status': 1
-    //    },{
-    //     headers: {
-    //         'Authorization':token
+    //         console.log(`User connection status checked: ${socket.connected ? 'Connected' : 'Disconnected'}`);
+    //     } catch (error) {
+    //         console.error('Error checking user connection status:', error);
     //     }
-    //    });
+    // };
+    //     // Start checking user connection status immediately when they connect
+    //     checkUserConnectionStatus();
+    //  // Start checking user connection status every 2 minutes
+    //  const intervalId = setInterval(checkUserConnectionStatus, 2 * 60 * 1000); // 2 minutes in milliseconds
+
 
       //send user is connected for partner
       socket.broadcast.to(userRoom).emit('room',{
@@ -197,22 +190,22 @@ socket.on('markSeen', (msg) => {
     socket.on('disconnect',async()=>{
 
               //this below code part is for call this api
-              try {
-                // Call the API with a status of 0 before clearing the interval
-                await axios.post('https://panel.delisa.app/api/v1/isconnected', {
-                    status: 0
-                }, {
-                    headers: {
-                        'Authorization': token
-                    }
-                });
-                console.log('User disconnected and API called with status 0');
-            } catch (error) {
-                console.error('Error calling API with status 0:', error);
-            }
+            //   try {
+            //     // Call the API with a status of 0 before clearing the interval
+            //     await axios.post('https://panel.delisa.app/api/v1/isconnected', {
+            //         status: 0
+            //     }, {
+            //         headers: {
+            //             'Authorization': token
+            //         }
+            //     });
+            //     console.log('User disconnected and API called with status 0');
+            // } catch (error) {
+            //     console.error('Error calling API with status 0:', error);
+            // }
         
             // Clear the interval
-            clearInterval(intervalId);
+            // clearInterval(intervalId);
         
         // await axios.post('https://panel.delisa.pro/api/v1/isconnected',{
         //     'status': 0
@@ -245,11 +238,17 @@ async function checkToken(user)
   {
      if(user.permission == false)
     {
-        let config = {
+        let config = 
+        {
+            
             headers: {
             Accept: 'application/json',
             Authorization : user.token,
-            }
+            },
+            params: {
+                socket: 1,
+            },
+          
         }
         await axios.post(baseDomain+'/api/v1/auth/me',{},config)
         .then(function (response) {
