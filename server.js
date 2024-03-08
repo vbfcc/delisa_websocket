@@ -150,6 +150,38 @@ socket.on('chatReaction', (msg) => {
             text: msg.text,
             seen: false,
             created_at: new Date().toISOString(),
+
+        });
+        console.log(msg);
+    } catch (error) {
+        // Handle any other unexpected errors
+        console.error('Error in chatReaction event:', error);
+    }
+});
+
+socket.on('chatOptions', (msg) => {
+    try {
+        const user = getCurrentUser(socket.id);
+
+        if (!user || !user.id) {
+            // Handle the case where user or user.id is undefined or falsy
+            console.error('User or user.id is undefined.');
+            return; // Prevent further processing if user is undefined
+        }
+
+        // Access the user's id safely
+        const userId = user.id;
+
+        // Continue processing with the user's id
+        socket.broadcast.to(user.room).emit('options', {
+            id: msg.id,
+            sender_id: userId, 
+            replyed_id: msg.replyed_id,
+            reply_message: msg.reply_message,
+            edited_id: msg.edited_id,
+            new_message: msg.new_message,
+            deleted_id: msg.deleted_id,
+
         });
         console.log(msg);
     } catch (error) {
